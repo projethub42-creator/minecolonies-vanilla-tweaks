@@ -1,0 +1,26 @@
+# Gradle caches and generated output
+.gradle/
+build/
+bin/
+out/
+
+# Local Minecraft dependencies and development game data
+libs/
+run/
+run-server/
+
+# IDE-generated files and machine-specific settings
+.eclipse/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/*
+
+
+# macOS metadata
+.DS_Store
+
+
+

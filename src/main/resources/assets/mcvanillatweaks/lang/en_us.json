@@ -1076,5 +1076,7 @@
   "mcvanillatweaks.names.list.norse": "Norse",
   "mcvanillatweaks.names.list.elves": "Elves",
   "mcvanillatweaks.names.list.dwarves": "Dwarves",
-  "mcvanillatweaks.names.list.orcs": "Orcs"
+  "mcvanillatweaks.names.list.orcs": "Orcs",
+  "mcvanillatweaks.hut.res.supply_all": "Supply all",
+  "mcvanillatweaks.hut.res.supply_all_hint": "Supply all needed items you carry to this hut."
 }

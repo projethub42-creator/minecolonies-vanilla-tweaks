@@ -1149,5 +1149,7 @@
   "mcvanillatweaks.names.list.norse": "Nordique",
   "mcvanillatweaks.names.list.elves": "Elfes",
   "mcvanillatweaks.names.list.dwarves": "Nains",
-  "mcvanillatweaks.names.list.orcs": "Orcs"
+  "mcvanillatweaks.names.list.orcs": "Orcs",
+  "mcvanillatweaks.hut.res.supply_all": "Tout fournir",
+  "mcvanillatweaks.hut.res.supply_all_hint": "Fournir à cette cabane tous les objets nécessaires de votre inventaire."
 }

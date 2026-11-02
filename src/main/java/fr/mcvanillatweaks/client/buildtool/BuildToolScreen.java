@@ -306,7 +306,11 @@ public final class BuildToolScreen extends Screen
             String name;
             if (anchor.getBlock() instanceof ILeveledBlueprintAnchorBlock leveled)
             {
-                final int level = leveled.getLevel(blueprint.getTileEntityData(preview().getPos(), blueprint.getPrimaryBlockOffset()));
+                // Browsing can happen before a preview position has been set. Reading the
+                // anchor level only needs its NBT, so use an origin until placement begins.
+                final BlockPos previewPos = preview().getPos();
+                final int level = leveled.getLevel(blueprint.getTileEntityData(
+                  previewPos == null ? BlockPos.ZERO : previewPos, blueprint.getPrimaryBlockOffset()));
                 final String withoutLevel = customName(blueprint, blueprint.getFileName().replace(Integer.toString(level), ""));
                 name = withoutLevel.isEmpty() ? customName(blueprint, blueprint.getFileName()) : withoutLevel;
             }

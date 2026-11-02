@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Fixed the build tool falling back to Structurize's windows when browsing leveled buildings before a preview
+  position has been set.
+- Builder's resources: a "Supply all" button hands over all needed items carried in the player's inventory.
+  Like the individual give buttons, it only works near the hut and not from the resource scroll.
+- Citizen skills (creative mode): select a skill and hold Shift to show controls for adjusting it by 5 or setting
+  it to the minimum (1) or maximum (99). The usual per-skill +/- buttons stay visible; the extra controls fit
+  inside the panel.
+- Updated development dependencies to MineColonies 1.1.1406, Structurize 1.0.837 and BlockUI 1.0.212.
+- Repository cleanup: ignore generated output, local dependency jars, development game data and editor settings;
+  make the Gradle launcher executable.
+
 ## 1.5.11
 
 - Multi-Piston (the block that moves doors and walls in MineColonies buildings): its settings window is now a

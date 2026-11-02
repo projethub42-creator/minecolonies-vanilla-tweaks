@@ -74,6 +74,7 @@ final class ResourcesTab extends HutTab
     /** Top of each row in the list, plus the list's height at the end. */
     private int[] rowTops = {0};
     private IconButton pin;
+    private IconButton supplyAll;
     private int ticks;
     /** After a transfer, the local amounts are kept until the server has had time to answer (MineColonies waits 3 s). */
     private int holdUntil;
@@ -93,6 +94,9 @@ final class ResourcesTab extends HutTab
     @Override
     protected void init()
     {
+        supplyAll = add(new IconButton(x, y + height - BUTTON_HEIGHT, PIN_WIDTH, BUTTON_HEIGHT,
+          new ItemStack(Items.CHEST), Component.translatable("mcvanillatweaks.hut.res.supply_all"), b -> supplyAll()));
+        supplyAll.active = canSupplyAll();
         final BuilderRef ref = BuilderSite.ref(building());
         if (ref != null)
         {
@@ -103,6 +107,27 @@ final class ResourcesTab extends HutTab
         }
     }
 
+    private boolean canSupplyAll()
+    {
+        return atHut() && site.resources.stream().anyMatch(ResourcesTab::canGive);
+    }
+
+    private void supplyAll()
+    {
+        if (!atHut())
+        {
+            return;
+        }
+        for (final BuildingBuilderResource resource : site.resources)
+        {
+            if (canGive(resource))
+            {
+                give(resource);
+            }
+        }
+        supplyAll.active = canSupplyAll();
+    }
+
     private static Component pinLabel(final BuilderRef ref)
     {
         return Component.translatable(PinnedBuilders.get(ref).isPresent() ? "mcvanillatweaks.hut.res.unpin" : "mcvanillatweaks.hut.res.pin");
@@ -111,6 +136,7 @@ final class ResourcesTab extends HutTab
     @Override
     protected void tick()
     {
+        supplyAll.active = canSupplyAll();
         if (++ticks >= holdUntil && ticks % 20 == 0)
         {
             site(BuilderSite.of(building(), module));
@@ -195,6 +221,13 @@ final class ResourcesTab extends HutTab
             tooltip.set(Component.translatable("mcvanillatweaks.hut.res.pin_hint").withStyle(ChatFormatting.GRAY));
         }
 
+        supplyAll.active = canSupplyAll();
+        if (supplyAll.isHovered())
+        {
+            tooltip.set(Component.translatable(atHut() ? "mcvanillatweaks.hut.res.supply_all_hint"
+              : "mcvanillatweaks.hut.res.give_at_hut"));
+        }
+
         // Supplied and used, as two villager experience bars.
         final int barsY = y + 27;
         final int half = (width - GAP) / 2;
@@ -211,7 +244,7 @@ final class ResourcesTab extends HutTab
 
         final List<BuildingBuilderResource> resources = site.resources;
         final int top = barsY + 22;
-        list.set(x, top, width, y + height - top, rowTops[resources.size()], ROW);
+        list.set(x, top, width, y + height - top - BUTTON_HEIGHT - GAP, rowTops[resources.size()], ROW);
         list.begin(g);
         if (resources.isEmpty())
         {

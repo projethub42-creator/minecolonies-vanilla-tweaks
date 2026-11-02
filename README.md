@@ -43,7 +43,7 @@ Languages: English, French.
 
 1. Install JDK 21.
 2. Put these jars in `libs/` (from the MineColonies downloads, same file names):
-   `minecolonies-1.1.1403-1.21.1.jar`, `structurize-1.0.832-1.21.1.jar`, `blockui-1.0.209-1.21.1.jar`,
+   `minecolonies-1.1.1406-1.21.1-snapshot.jar`, `structurize-1.0.832-1.21.1.jar`, `blockui-1.0.209-1.21.1.jar`,
    `domum-ornamentum-1.0.236-snapshot-main.jar`.
 3. Run `./gradlew build`. The mod is written to `build/libs/`, its source archive to `build/distributions/`.
 

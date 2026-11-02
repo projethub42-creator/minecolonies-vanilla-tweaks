@@ -5,6 +5,7 @@ import com.minecolonies.api.entity.citizen.Skill;
 import com.minecolonies.core.network.messages.server.colony.citizen.AdjustSkillCitizenMessage;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
@@ -33,6 +34,36 @@ final class SkillsPage extends PageView
     private CitizenInfo.JobSkills jobSkills;
     private Map<Skill, List<Integer>> shares = Map.of();
     private int ticks;
+    private Skill selected = Skill.values()[0];
+    private static final String[] ADJUST_LABELS = {"Min", "-5", "-1", "+1", "+5", "Max"};
+
+    private int rowHeight()
+    {
+        return creative() && Screen.hasShiftDown() ? ROW - 1 : ROW;
+    }
+
+    private int controlsY()
+    {
+        return y + height - BUTTON - 4;
+    }
+
+    private int controlX(final int index)
+    {
+        return x + index * 27;
+    }
+
+    private void adjust(final Skill skill, final int delta)
+    {
+        if (delta == 0)
+        {
+            return;
+        }
+        Gui.clickSound();
+        final ICitizenDataView citizen = citizen();
+        new AdjustSkillCitizenMessage(citizen.getColony(), citizen, delta, skill).sendToServer();
+        CitizenScreens.trigger((delta > 0 ? "plus_" : "minus_") + skill.name().toLowerCase(Locale.US),
+          screen.source() == null ? null : screen.source().getXmlResourceLocation());
+    }
 
     SkillsPage(final CitizenScreen screen)
     {
@@ -81,22 +112,22 @@ final class SkillsPage extends PageView
     {
         final ICitizenDataView citizen = citizen();
         final Skill[] skills = Skill.values();
-        Gui.inset(g, x, listTop(), width, skills.length * ROW + 4);
+        Gui.inset(g, x, listTop(), width, skills.length * rowHeight() + 4);
         final boolean creative = creative();
 
         for (int i = 0; i < skills.length; i++)
         {
             final Skill skill = skills[i];
-            final int rowY = listTop() + 2 + i * ROW;
-            final boolean hovered = Gui.inside(mouseX, mouseY, x + 1, rowY, width - 2, ROW);
+            final int rowY = listTop() + 2 + i * rowHeight();
+            final boolean hovered = Gui.inside(mouseX, mouseY, x + 1, rowY, width - 2, rowHeight());
             final List<Integer> share = shares.getOrDefault(skill, List.of());
             if (!share.isEmpty())
             {
-                g.fill(x + 1, rowY, x + width - 1, rowY + ROW, 0x18FFFFFF);
+                g.fill(x + 1, rowY, x + width - 1, rowY + rowHeight(), 0x18FFFFFF);
             }
-            if (hovered)
+            if (hovered || creative && Screen.hasShiftDown() && skill == selected)
             {
-                g.fill(x + 1, rowY, x + width - 1, rowY + ROW, Gui.ROW_HOVER);
+                g.fill(x + 1, rowY, x + width - 1, rowY + rowHeight(), Gui.ROW_HOVER);
             }
 
             VanillaIcons.item(g, VanillaIcons.skill(skill), x + 2, rowY + 1, 10);
@@ -128,8 +159,21 @@ final class SkillsPage extends PageView
             }
         }
 
+        if (creative && Screen.hasShiftDown())
+        {
+            g.drawString(font, Gui.fit(font, CitizenInfo.skillName(selected), width), x + 1, controlsY() - 10, Gui.LABEL, false);
+            final int level = CitizenInfo.skillLevel(citizen, selected);
+            for (int i = 0; i < ADJUST_LABELS.length; i++)
+            {
+                final boolean active = i < 3 ? level > 1 : level < CitizenInfo.MAX_SKILL_LEVEL;
+                Gui.textButton(g, font, controlX(i), controlsY(), 25, BUTTON + 2, ADJUST_LABELS[i], active,
+                  active && Gui.inside(mouseX, mouseY, controlX(i), controlsY(), 25, BUTTON + 2));
+            }
+            return;
+        }
+
         final Component legend = Component.translatable(jobSkills == null ? "mcvanillatweaks.citizen.no_job_skills" : "mcvanillatweaks.citizen.skills_legend");
-        g.drawString(font, Gui.fit(font, legend, width - 2), x + 1, listTop() + skills.length * ROW + 10, Gui.LABEL, false);
+        g.drawString(font, Gui.fit(font, legend, width - 2), x + 1, listTop() + skills.length * rowHeight() + 10, Gui.LABEL, false);
     }
 
     private static int total(final List<Integer> share)
@@ -179,20 +223,39 @@ final class SkillsPage extends PageView
         {
             return false;
         }
+        for (int i = 0; Screen.hasShiftDown() && i < ADJUST_LABELS.length; i++)
+        {
+            if (Gui.inside(mouseX, mouseY, controlX(i), controlsY(), 25, BUTTON + 2))
+            {
+                final int level = CitizenInfo.skillLevel(citizen(), selected);
+                final int target = switch (i)
+                {
+                    case 0 -> 1;
+                    case 1 -> Math.max(1, level - 5);
+                    case 2 -> Math.max(1, level - 1);
+                    case 3 -> Math.min(CitizenInfo.MAX_SKILL_LEVEL, level + 1);
+                    case 4 -> Math.min(CitizenInfo.MAX_SKILL_LEVEL, level + 5);
+                    default -> CitizenInfo.MAX_SKILL_LEVEL;
+                };
+                adjust(selected, target - level);
+                return true;
+            }
+        }
         final Skill[] skills = Skill.values();
         for (int i = 0; i < skills.length; i++)
         {
-            final int rowY = listTop() + 2 + i * ROW;
+            final int rowY = listTop() + 2 + i * rowHeight();
             final int delta = Gui.inside(mouseX, mouseY, minusX(), rowY + 1, BUTTON, BUTTON) ? -1
                                 : Gui.inside(mouseX, mouseY, plusX(), rowY + 1, BUTTON, BUTTON) ? 1 : 0;
             if (delta != 0)
             {
-                Gui.clickSound();
-                final ICitizenDataView citizen = citizen();
-                // Same message and button id as MineColonies' main citizen page.
-                new AdjustSkillCitizenMessage(citizen.getColony(), citizen, delta, skills[i]).sendToServer();
-                CitizenScreens.trigger((delta > 0 ? "plus_" : "minus_") + skills[i].name().toLowerCase(Locale.US),
-                  screen.source() == null ? null : screen.source().getXmlResourceLocation());
+                selected = skills[i];
+                adjust(selected, delta);
+                return true;
+            }
+            if (Gui.inside(mouseX, mouseY, x + 1, rowY, width - 2, rowHeight()))
+            {
+                selected = skills[i];
                 return true;
             }
         }
